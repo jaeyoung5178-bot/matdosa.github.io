@@ -1,32 +1,27 @@
-맛도사 홈페이지 — 최종 업로드본 (영문 파일명)
-=============================================
-한글 파일명이 깃허브에서 404를 일으켜서, 전부 영어 이름으로 바꾼 최종본입니다.
-이 폴더 안 파일 6개를 깃허브에 "그대로" 올리면 됩니다.
-
-[파일]
- index.html      ← 메인 (포트폴리오/허브 탭이 portfolio.html, hub.html 을 부름)
- portfolio.html  ← 포트폴리오 (필수)
- hub.html        ← 카페 탐방 허브 (필수)
- card.html       ← 명함 (독립, 인쇄용)
- logo_full.png / logo_mark.png ← 로고 원본(보관용)
+맛도사 홈페이지 — 클라우드 저장(파이어베이스) 연결 최종본
+========================================================
+이제 입력한 메모·카페·성과가 파이어베이스(클라우드)에 저장돼,
+폰·노트북 어디서 열어도 같은 데이터로 동기화됩니다.
 
 [올리는 법 — 전부 덮어쓰기]
- 1) 깃허브 저장소(matdosa.github.io) → Code 탭
- 2) Add file → Upload files
- 3) 이 폴더 안 파일 6개를 한꺼번에 끌어다 놓기
-    · index.html 은 기존 것을 덮어씀(같은 이름이라 자동 교체)
- 4) 초록 Commit changes
- 5) 1~2분 뒤 "시크릿창"으로 사이트 열기 → 포트폴리오/허브 탭 확인
+ 1) 깃허브 저장소(matdosa.github.io) → Code 탭 → Add file → Upload files
+ 2) 이 폴더 안 파일 6개를 한꺼번에 끌어다 놓기 (index.html은 덮어씀)
+ 3) Commit changes → 1~2분 뒤 시크릿창으로 확인
 
-[기존 한글 파일은?]
- · 그냥 둬도 작동엔 문제 없음. 깔끔히 하려면 아래 한글 파일들 삭제 권장:
-   맛도사_포트폴리오.html / 맛도사_카페탐방_허브.html / 맛도사_명함_인쇄시안.html /
-   맛도사_로고_full.png / 맛도사_로고_mark.png / README_먼저읽기.txt
-   (각 파일 클릭 → 휴지통 아이콘 → Commit)
+[중요 — 파이어베이스 규칙 게시했는지 확인]
+ Firebase 콘솔 → Realtime Database → '규칙' 탭이 아래처럼 되어 있어야 저장됨:
+   {
+     "rules": { ".read": true, ".write": true }
+   }
+ (게시 안 했으면 저장이 막힙니다)
 
-[확인용 단독 주소]
- https://jaeyoung5178-bot.github.io/matdosa.github.io/portfolio.html
- https://jaeyoung5178-bot.github.io/matdosa.github.io/hub.html
- → 둘 다 열리면, index.html 의 탭도 새로고침하면 뜸.
+[동작 확인]
+ · 사이트에서 장소/메모 추가 → 다른 기기(폰)에서 사이트 열기 → 같은 데이터 보이면 성공
+ · 좌하단 표시가 '클라우드'로 바뀌면 연결된 것
 
-[네이버 지도] index.html 상단 NAVER_CLIENT_ID="" 에 키 넣고 그 파일만 재업로드.
+[보안 참고]
+ · 지금 규칙은 누구나 읽기/쓰기 가능(테스트용). 주소를 아는 사람만 접근 가능하지만
+   민감정보는 넣지 마세요. 나중에 잠그는 법은 클로드에게 요청하세요.
+
+[파일]
+ index.html / portfolio.html / hub.html / card.html / logo_full.png / logo_mark.png

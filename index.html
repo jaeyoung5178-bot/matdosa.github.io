@@ -361,7 +361,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 <div class="toast" id="toast"></div>
 
 <script>
-const FIREBASE_CONFIG={ /* databaseURL:"https://...firebasedatabase.app" */ };
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyDLYC26mvaHSeM9MNjl7IviDi3bSLFtw6I",
+  authDomain:"matdosa-dd3d3.firebaseapp.com",
+  databaseURL:"https://matdosa-dd3d3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"matdosa-dd3d3",
+  storageBucket:"matdosa-dd3d3.firebasestorage.app",
+  messagingSenderId:"266225950781",
+  appId:"1:266225950781:web:a626a097483c8593470a54"
+};
 const DEFAULT_PROMPTS=[
  {id:'p1',cat:'캡션',title:'맛도사 보이스 캡션',text:'너는 카페 감성 콘텐츠 크리에이터 "맛도사"다. 슬로건은 "삶에도 맛이 있습니다". 아래 정보로 인스타 캡션을 써라. 문학적이고 담백한 1인칭, 과장 없이 공간의 온도를 전한다. 2~4문장 + 마지막 줄에 매장명. \n매장: [이름]\n메뉴: [추천메뉴]\n한줄느낌: [느낌]'},
  {id:'p2',cat:'해시태그',title:'인천 카페 해시태그 30',text:'아래 카페에 어울리는 인스타 해시태그 30개를 한국어로 만들어줘. 대형 5개·중형 15개·소형 10개로 섞고, 지역(인천/○○동) 태그 포함. 쉼표로 구분.\n카페: [이름] / 지역: [지역] / 특징: [특징]'},
