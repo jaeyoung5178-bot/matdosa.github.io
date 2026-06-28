@@ -396,35 +396,65 @@ navObs.observe(hero);
 const rev=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rev.unobserve(e.target);}}),{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>rev.observe(el));
 
-/* ===== 스크롤 연동 시네마틱 줌 (영상 같은 확대) ===== */
+/* ===== 히어로 시네마틱 모션 (강렬한 등장 + 무한 줌 인/아웃 + 스크롤 줌) ===== */
 (function(){
-  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   const hero=document.querySelector('.hero');
   const heroImg=document.querySelector('.hero .bg img');
   const motion=document.querySelector('.motion');
   const motionImg=motion&&motion.querySelector('img');
-  let ticking=false;
-  function clamp(v){return v<0?0:v>1?1:v;}
-  function update(){
-    ticking=false;
-    const vh=window.innerHeight;
-    if(hero&&heroImg){
-      const h=hero.offsetHeight||vh;
-      const p=clamp((-hero.getBoundingClientRect().top)/h);   // 0=상단, 1=히어로 벗어남
-      heroImg.style.transform='scale('+(1.08+p*0.16).toFixed(4)+') translateY('+(p*4).toFixed(2)+'%)';
-    }
-    if(motion&&motionImg){
-      const r=motion.getBoundingClientRect();
-      const prog=clamp((r.top+r.height/2)/vh);                // ~1 화면에 진입, ~0 화면 위로 빠짐
-      const scale=1.02+(1-prog)*0.20;                          // 지나가는 동안 1.02 → 1.22 서서히 확대
-      motionImg.style.transform='scale('+scale.toFixed(4)+')';
-    }
+  const clamp=v=>v<0?0:v>1?1:v;
+
+  /* ---- 모션 띠: 스크롤 연동 줌 ---- */
+  let mt=false;
+  function motionUpdate(){
+    mt=false;
+    if(!(motion&&motionImg))return;
+    const vh=window.innerHeight,r=motion.getBoundingClientRect();
+    const prog=clamp((r.top+r.height/2)/vh);
+    motionImg.style.transform='scale('+(1.02+(1-prog)*0.20).toFixed(4)+')';
   }
-  function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update);}}
+  function onScroll(){if(!mt){mt=true;requestAnimationFrame(motionUpdate);}}
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
-  window.addEventListener('load',update);
-  update();
+  motionUpdate();
+
+  /* ---- 히어로: 등장 리빌 + 무한 켄번스 호흡 + 스크롤 줌 ---- */
+  if(!hero||!heroImg)return;
+  if(reduce){heroImg.style.transform='scale(1.14)';return;}
+  const REVEAL=3000;           // 등장 리빌 길이(ms)
+  const PERIOD=9000;           // 줌 인/아웃 한 주기(ms)
+  const AMP=0.075;             // 줌 진폭 (±7.5%)
+  const BASE=1.16;             // 호흡 기준 배율
+  const t0=performance.now();
+  let running=false,rafId=0;
+  function easeOutExpo(p){return p>=1?1:1-Math.pow(2,-10*p);}
+  function loop(now){
+    const el=now-t0;
+    let base,panX,panY;
+    if(el<REVEAL){                                   // ① 드라마틱 등장: 큰 클로즈업 → 정착
+      const e=easeOutExpo(el/REVEAL);
+      base=1.42+(BASE-1.42)*e;                       // 1.42 → 1.16
+      panX=-2.2*(1-e); panY=-1.6*(1-e);              // 살짝 어긋나 있다가 제자리로
+    }else{                                           // ② 무한 켄번스 호흡 (줌 인/아웃 + 패닝)
+      const ph=(el-REVEAL)/PERIOD*Math.PI*2;
+      base=BASE+Math.sin(ph)*AMP;                    // 1.085 ↔ 1.235 천천히 왕복
+      panX=Math.sin(ph)*1.5;                         // 줌과 함께 가로 드리프트
+      panY=Math.sin(ph*0.5)*1.0;                     // 더 느린 세로 드리프트 → 살아있는 느낌
+    }
+    const h=hero.offsetHeight||window.innerHeight;   // ③ 스크롤 줌 + 패럴랙스
+    const sp=clamp((-hero.getBoundingClientRect().top)/h);
+    const scale=base+sp*0.16;
+    heroImg.style.transform='scale('+scale.toFixed(4)+') translate('+panX.toFixed(2)+'%,'+(panY+sp*5).toFixed(2)+'%)';
+    rafId=requestAnimationFrame(loop);
+  }
+  // 히어로가 화면에 보일 때만 루프 가동(배터리 절약)
+  const io=new IntersectionObserver(es=>{
+    const vis=es[0].isIntersecting;
+    if(vis&&!running){running=true;rafId=requestAnimationFrame(loop);}
+    else if(!vis&&running){running=false;cancelAnimationFrame(rafId);}
+  },{threshold:0});
+  io.observe(hero);
 })();
 </script>
 <div id="pt" aria-hidden="true"><div class="sh"></div></div>
