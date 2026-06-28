@@ -2,7 +2,7 @@
   "name": "맛도사 Creator Studio",
   "short_name": "맛도사",
   "description": "맛도사 크리에이터 스튜디오 — 장소·콘텐츠·성과 관리",
-  "start_url": ".",
+  "start_url": "index.html",
   "scope": ".",
   "display": "standalone",
   "background_color": "#F5F1EA",
