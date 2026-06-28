@@ -111,6 +111,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .chip.fee{background:rgba(176,123,58,.14);color:#8A5A22}
 .linkmini{font-size:11.5px;color:var(--olive-d);text-decoration:none;border-bottom:1px solid transparent}
 .linkmini:hover{border-color:var(--olive)}
+.tile .stagenav{display:flex;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.snav{flex:1;font-family:inherit;font-size:11px;font-weight:600;color:var(--coffee);background:var(--sand-2);border:1px solid var(--line);border-radius:7px;padding:5px 4px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snav:hover{background:var(--sand);border-color:var(--olive-l)}
+.snav.back{color:var(--olive-d)}
+.snav:active{transform:scale(.97)}
 
 /* planner map */
 #plannerMap{height:300px;border-radius:var(--r);border:1px solid var(--line);margin-bottom:18px;z-index:0}
@@ -618,7 +623,7 @@ function renderPlanner(){
   const board=document.getElementById('plannerBoard');
   board.innerHTML=CAFE_STATUS.map(([k,lbl])=>{
     const items=S.cafes.filter(c=>c.status===k);
-    const tiles=items.map(c=>{const kk=c.lat&&c.lng?`https://map.kakao.com/link/map/${encodeURIComponent(c.name)},${c.lat},${c.lng}`:`https://map.kakao.com/?q=${encodeURIComponent(c.name+' '+(c.area||''))}`;const nv=`https://map.naver.com/p/search/${encodeURIComponent(c.name+' '+(c.area||''))}`;return `<div class="tile" data-id="${c.id}"><div class="tt">${c.name}</div><div class="tm">${c.area||''}${c.date?' · '+c.date:''}</div><div class="tb"><a class="linkmini" href="${kk}" target="_blank" rel="noopener" onclick="event.stopPropagation()">카카오맵</a><a class="linkmini" href="${nv}" target="_blank" rel="noopener" onclick="event.stopPropagation()">네이버</a></div></div>`;}).join('')||'<div class="empty" style="padding:8px 6px">비어 있음</div>';
+    const tiles=items.map(c=>{const kk=c.lat&&c.lng?`https://map.kakao.com/link/map/${encodeURIComponent(c.name)},${c.lat},${c.lng}`:`https://map.kakao.com/?q=${encodeURIComponent(c.name+' '+(c.area||''))}`;const nv=`https://map.naver.com/p/search/${encodeURIComponent(c.name+' '+(c.area||''))}`;const si=CAFE_STATUS.findIndex(x=>x[0]===c.status);const back=si>0?`<button class="snav back" onclick="event.stopPropagation();moveCafe('${c.id}',-1)">‹ ${CAFE_STATUS[si-1][1]}</button>`:'';const fwd=si<CAFE_STATUS.length-1?`<button class="snav" onclick="event.stopPropagation();moveCafe('${c.id}',1)">${CAFE_STATUS[si+1][1]} ›</button>`:'';const nav=(back||fwd)?`<div class="stagenav">${back}${fwd}</div>`:'';return `<div class="tile" data-id="${c.id}"><div class="tt">${c.name}</div><div class="tm">${c.area||''}${c.date?' · '+c.date:''}</div><div class="tb"><a class="linkmini" href="${kk}" target="_blank" rel="noopener" onclick="event.stopPropagation()">카카오맵</a><a class="linkmini" href="${nv}" target="_blank" rel="noopener" onclick="event.stopPropagation()">네이버</a></div>${nav}</div>`;}).join('')||'<div class="empty" style="padding:8px 6px">비어 있음</div>';
     return `<div class="col"><div class="ch"><span>${lbl}</span><span class="cnt">${items.length}</span></div>${tiles}</div>`;
   }).join('');
   board.querySelectorAll('.tile').forEach(t=>t.addEventListener('click',()=>editCafe(t.dataset.id)));
@@ -646,6 +651,7 @@ function saveCafe(id){
   persist();closeModal();renderPlanner();toast('저장됨');
 }
 function delCafe(id){S.cafes=S.cafes.filter(c=>c.id!==id);persist();closeModal();renderPlanner();toast('삭제됨');}
+function moveCafe(id,dir){const c=S.cafes.find(x=>x.id===id);if(!c)return;const order=CAFE_STATUS.map(s=>s[0]);let i=order.indexOf(c.status);i=Math.max(0,Math.min(order.length-1,i+dir));if(order[i]===c.status)return;c.status=order[i];persist();renderPlanner();toast(`${c.name} → ${CAFE_STATUS[i][1]}`);}
 document.getElementById('addCafe').addEventListener('click',addCafeForm);
 
 /* ---------- CALENDAR ---------- */
@@ -725,7 +731,7 @@ function renderSpon(){
   const board=document.getElementById('sponBoard');
   board.innerHTML=SPON_STATUS.map(([k,lbl])=>{
     const items=S.sponsors.filter(s=>s.status===k);
-    const tiles=items.map(s=>`<div class="tile" data-id="${s.id}"><div class="tt">${s.brand}</div><div class="tm">${s.date||''}</div><div class="tb">${s.fee?`<span class="chip fee">${Number(s.fee).toLocaleString()}원</span>`:''}${s.note?`<span class="chip">메모</span>`:''}</div></div>`).join('')||'<div class="empty" style="padding:8px 6px">비어 있음</div>';
+    const tiles=items.map(s=>{const si=SPON_STATUS.findIndex(x=>x[0]===s.status);const back=si>0?`<button class="snav back" onclick="event.stopPropagation();moveSpon('${s.id}',-1)">‹ ${SPON_STATUS[si-1][1]}</button>`:'';const fwd=si<SPON_STATUS.length-1?`<button class="snav" onclick="event.stopPropagation();moveSpon('${s.id}',1)">${SPON_STATUS[si+1][1]} ›</button>`:'';const nav=(back||fwd)?`<div class="stagenav">${back}${fwd}</div>`:'';return `<div class="tile" data-id="${s.id}"><div class="tt">${s.brand}</div><div class="tm">${s.date||''}</div><div class="tb">${s.fee?`<span class="chip fee">${Number(s.fee).toLocaleString()}원</span>`:''}${s.note?`<span class="chip">메모</span>`:''}</div>${nav}</div>`;}).join('')||'<div class="empty" style="padding:8px 6px">비어 있음</div>';
     return `<div class="col"><div class="ch"><span>${lbl}</span><span class="cnt">${items.length}</span></div>${tiles}</div>`;
   }).join('');
   board.querySelectorAll('.tile').forEach(t=>t.addEventListener('click',()=>sponForm(S.sponsors.find(s=>s.id===t.dataset.id))));
@@ -742,6 +748,7 @@ function sponForm(s){
   <div class="mfoot">${isE?'<button class="del" onclick="delSpon(\''+s.id+'\')">삭제</button>':''}<button class="btn btn-ghost btn-sm" onclick="closeModal()">취소</button><button class="btn btn-dark btn-sm" onclick="saveSpon('${s.id||''}')">저장</button></div>`);
 }
 function saveSpon(id){const g=x=>document.getElementById(x).value.trim();const brand=g('sp_brand');if(!brand){toast('브랜드를 입력하세요');return;}const o={id:id||uid(),brand,fee:g('sp_fee'),date:g('sp_date'),status:g('sp_status'),note:g('sp_note')};if(id){const i=S.sponsors.findIndex(s=>s.id===id);S.sponsors[i]=o;}else S.sponsors.push(o);persist();closeModal();renderSpon();toast('저장됨');}
+function moveSpon(id,dir){const s=S.sponsors.find(x=>x.id===id);if(!s)return;const order=SPON_STATUS.map(x=>x[0]);let i=order.indexOf(s.status);i=Math.max(0,Math.min(order.length-1,i+dir));if(order[i]===s.status)return;s.status=order[i];persist();renderSpon();toast(`${s.brand} → ${SPON_STATUS[i][1]}`);}
 function delSpon(id){S.sponsors=S.sponsors.filter(s=>s.id!==id);persist();closeModal();renderSpon();toast('삭제됨');}
 document.getElementById('addSpon').addEventListener('click',()=>sponForm());
 
