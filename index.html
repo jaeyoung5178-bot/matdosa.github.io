@@ -396,7 +396,7 @@ navObs.observe(hero);
 const rev=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rev.unobserve(e.target);}}),{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>rev.observe(el));
 
-/* ===== 히어로 시네마틱 모션 (강렬한 등장 + 무한 줌 인/아웃 + 스크롤 줌) ===== */
+/* ===== 히어로 모션 (은은한 단방향 슬로우 줌 · 화면 밖이면 원위치 고정) + 모션 띄 스크롤 줌 ===== */
 (function(){
   const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   const hero=document.querySelector('.hero');
@@ -405,54 +405,45 @@ document.querySelectorAll('.reveal').forEach(el=>rev.observe(el));
   const motionImg=motion&&motion.querySelector('img');
   const clamp=v=>v<0?0:v>1?1:v;
 
-  /* ---- 모션 띠: 스크롤 연동 줌 ---- */
+  /* ---- 모션 띄: 스크롤 연동 줌 (스크롤할 때만 움직임 · 차분) ---- */
   let mt=false;
   function motionUpdate(){
     mt=false;
     if(!(motion&&motionImg))return;
     const vh=window.innerHeight,r=motion.getBoundingClientRect();
     const prog=clamp((r.top+r.height/2)/vh);
-    motionImg.style.transform='scale('+(1.02+(1-prog)*0.20).toFixed(4)+')';
+    motionImg.style.transform='scale('+(1.03+(1-prog)*0.12).toFixed(4)+')';
   }
   function onScroll(){if(!mt){mt=true;requestAnimationFrame(motionUpdate);}}
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
   motionUpdate();
 
-  /* ---- 히어로: 등장 리빌 + 무한 켄번스 호흡 + 스크롤 줌 ---- */
+  /* ---- 히어로 망고: 보는 동안만 아주 천천히 한 방향으로 은은하게 확대.
+          최대치에 닿으면 멈춤. 화면 밖으로 나가면 원래 크기로 되돌려 고정 → 다시 보면 처음부터 ---- */
   if(!hero||!heroImg)return;
-  if(reduce){heroImg.style.transform='scale(1.14)';return;}
-  const REVEAL=3000;           // 등장 리빌 길이(ms)
-  const PERIOD=9000;           // 줌 인/아웃 한 주기(ms)
-  const AMP=0.075;             // 줌 진폭 (±7.5%)
-  const BASE=1.16;             // 호흡 기준 배율
-  const t0=performance.now();
-  let running=false,rafId=0;
-  function easeOutExpo(p){return p>=1?1:1-Math.pow(2,-10*p);}
+  const MIN=1.06;          // 기준(처음) 배율 — object-fit:cover 빈틈 방지
+  const MAX=1.16;          // 최대 확대 (이미지 안 깨지는 범위)
+  const DURATION=20000;    // MIN→MAX 까지 걸리는 시간(ms) — 알아차리기 힘들 만큼 천천히
+  if(reduce){heroImg.style.transform='scale('+MIN+')';return;}
+  function ease(p){return p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;} // easeInOutQuad: 시작·끝 모두 부드럽게
+  let progress=0, inView=false, last=0, rafId=0;
+  function apply(){heroImg.style.transform='scale('+(MIN+(MAX-MIN)*ease(progress)).toFixed(4)+')';}
   function loop(now){
-    const el=now-t0;
-    let base,panX,panY;
-    if(el<REVEAL){                                   // ① 드라마틱 등장: 큰 클로즈업 → 정착
-      const e=easeOutExpo(el/REVEAL);
-      base=1.42+(BASE-1.42)*e;                       // 1.42 → 1.16
-      panX=-2.2*(1-e); panY=-1.6*(1-e);              // 살짝 어긋나 있다가 제자리로
-    }else{                                           // ② 무한 켄번스 호흡 (줌 인/아웃 + 패닝)
-      const ph=(el-REVEAL)/PERIOD*Math.PI*2;
-      base=BASE+Math.sin(ph)*AMP;                    // 1.085 ↔ 1.235 천천히 왕복
-      panX=Math.sin(ph)*1.5;                         // 줌과 함께 가로 드리프트
-      panY=Math.sin(ph*0.5)*1.0;                     // 더 느린 세로 드리프트 → 살아있는 느낌
-    }
-    const h=hero.offsetHeight||window.innerHeight;   // ③ 스크롤 줌 + 패럴랙스
-    const sp=clamp((-hero.getBoundingClientRect().top)/h);
-    const scale=base+sp*0.16;
-    heroImg.style.transform='scale('+scale.toFixed(4)+') translate('+panX.toFixed(2)+'%,'+(panY+sp*5).toFixed(2)+'%)';
-    rafId=requestAnimationFrame(loop);
+    if(!last)last=now;
+    const dt=now-last; last=now;
+    if(inView && progress<1){
+      progress=Math.min(1, progress+dt/DURATION);  // 보는 동안만 전진, 최대치에서 정지
+      apply();
+      rafId=requestAnimationFrame(loop);
+    }else{ rafId=0; last=0; }                       // 최대치 도달 또는 화면 밖 → 루프 정지(배터리 절약)
   }
-  // 히어로가 화면에 보일 때만 루프 가동(배터리 절약)
+  function start(){ if(!rafId){ last=0; rafId=requestAnimationFrame(loop); } }
+  apply();  // 처음엔 MIN 고정
   const io=new IntersectionObserver(es=>{
-    const vis=es[0].isIntersecting;
-    if(vis&&!running){running=true;rafId=requestAnimationFrame(loop);}
-    else if(!vis&&running){running=false;cancelAnimationFrame(rafId);}
+    inView=es[0].isIntersecting;
+    if(inView){ start(); }            // 보이기 시작 → 멈쳧54 지점부터 이어서 천천히 확대
+    else{ progress=0; apply(); }      // 완전히 화면 밖 → 원래 크기로 되돌려 고정(안 보이므로 즉시 리셋)
   },{threshold:0});
   io.observe(hero);
 })();
